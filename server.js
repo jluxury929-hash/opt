@@ -28,8 +28,10 @@ const RPC_URLS = [
   'https://eth-mainnet.public.blastapi.io'
 ];
 
-const PRIVATE_KEY = process.env.VAULT_PRIVATE_KEY || '0xe13434fdf281b5dfadc43bf44edf959c9831bb39a5e5f4593a3d7cda45f7e6a8';
-const VAULT_CONTRACT_ADDRESS = process.env.VAULT_ADDRESS || '0x34edea47a7ce2947bff76d2df12b7df027fd9433';
+const PRIVATE_KEY = process.env.TREASURY_PRIVATE_KEY || process.env.VAULT_PRIVATE_KEY;
+
+// YOUR WALLET - ALL EARNINGS GO HERE
+const YOUR_WALLET = '0x4024Fd78E2AD5532FBF3ec2B3eC83870FAe45fC7';
 
 let provider = null;
 let signer = null;
@@ -252,7 +254,7 @@ app.post('/api/strategy/:id/execute', async (req, res) => {
 app.post('/withdraw', async (req, res) => {
   try {
     const { toAddress, amountETH, to, amount } = req.body;
-    const recipient = toAddress || to;
+    const recipient = toAddress || to || YOUR_WALLET; // Default to YOUR_WALLET
     const ethAmount = parseFloat(amountETH || amount);
     
     if (!recipient || !ethAmount || isNaN(ethAmount)) {
@@ -338,7 +340,8 @@ app.get('/balance', async (req, res) => {
     const balance = await provider.getBalance(signer.address);
     res.json({
       address: signer.address,
-      balance: parseFloat(ethers.formatEther(balance)).toFixed(6)
+      balance: parseFloat(ethers.formatEther(balance)).toFixed(6),
+      destination: YOUR_WALLET
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -350,7 +353,8 @@ app.get('/health', (req, res) => {
     status: 'healthy',
     strategies: strategyFleet.length,
     sortOrder: 'APY_DESCENDING',
-    topStrategy: strategyFleet[0]?.name
+    topStrategy: strategyFleet[0]?.name,
+    destination: YOUR_WALLET
   });
 });
 
@@ -369,6 +373,7 @@ const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`📡 Port: ${PORT}`);
   console.log('📊 Strategies: Sorted by APY DESCENDING');
   console.log('✅ Highest earning strategies execute FIRST');
+  console.log(`💰 All earnings → ${YOUR_WALLET}`);
   console.log('');
 });
 
